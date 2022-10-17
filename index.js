@@ -26,26 +26,36 @@ app.use(session({
 app.use(express.urlencoded({extended: true}));
 app.use(express.json());
 var loginMessage = '';
+const User = require('./model/User').User;
+var user = null;
 app.get('/', function (req, res) {
-    if (false) {
+    if (!user) {
         res.redirect('/login');
+    } else {
+        res.render(__dirname + '/views/index.ejs');
     }
-    res.render(__dirname + '/views/index.ejs');
 })
 
 app.get('/login', function (req, res) {
-    res.render(__dirname + '/views/login.ejs', {loginMessage: loginMessage});
-    loginMessage = '';
+    if (user) {
+        res.redirect('/');
+    } else {
+        res.render(__dirname + '/views/login.ejs', {loginMessage: loginMessage});
+        loginMessage = '';
+    }
 })
 
 app.post('/login', function (req, res) {
-    console.log(req.body);
+    if (user) {
+        res.redirect('/');
+    }
     var username = req.body.username;
     var password = req.body.password;
     if (username && password) {
         connection.query('SELECT * FROM users WHERE username = ? AND password = ? limit 1', [username, password], function (error, results, fields) {
             if (error) throw error;
             if (results.length > 0) {
+                user = new User(results[0].id, results[0].username);
                 res.redirect('/');
             } else {
                 // res.send('Incorrect Username and/or Password!');
@@ -56,7 +66,6 @@ app.post('/login', function (req, res) {
         });
     }
 })
-
 
 
 // app.use(express.static(path.join(__dirname, 'static')));
