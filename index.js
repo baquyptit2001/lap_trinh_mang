@@ -10,34 +10,39 @@ app.set('view engine', 'ejs');
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 var mysql = require('mysql2');
-const session = require("express-session");
+const cookieParser = require('cookie-parser');
 const path = require("path");
+
+app.use(cookieParser());
+
 var connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: 'Baquy123!',
     database: 'taixiu'
 });
-app.use(session({
-    secret: 'secret',
-    resave: true,
-    saveUninitialized: true
-}));
+
 app.use(express.urlencoded({extended: true}));
 app.use(express.json());
 var loginMessage = '';
 const User = require('./model/User').User;
+const Bet = require('./model/Bet').Bet
 var user = null;
+var bets = []
 app.get('/', function (req, res) {
-    if (!user) {
+    let cookies = req.cookies;
+    if (!cookies.user_id) {
         res.redirect('/login');
     } else {
-        res.render(__dirname + '/views/index.ejs');
+        user = getUserById(cookies.user_id).then(function (user) {
+            res.render(__dirname + '/views/index.ejs', {user: user});
+        });
     }
 })
 
 app.get('/login', function (req, res) {
-    if (user) {
+    let cookies = req.cookies;
+    if (cookies.user_id) {
         res.redirect('/');
     } else {
         res.render(__dirname + '/views/login.ejs', {loginMessage: loginMessage});
@@ -45,10 +50,13 @@ app.get('/login', function (req, res) {
     }
 })
 
+app.get('/logout', function (req, res) {
+    res.clearCookie('user_id');
+    res.clearCookie('user_username');
+    res.redirect('/login');
+})
+
 app.post('/login', function (req, res) {
-    if (user) {
-        res.redirect('/');
-    }
     var username = req.body.username;
     var password = req.body.password;
     if (username && password) {
@@ -56,9 +64,11 @@ app.post('/login', function (req, res) {
             if (error) throw error;
             if (results.length > 0) {
                 user = new User(results[0].id, results[0].username);
+                res.cookie('user_id', user.id);
+                res.cookie('user_username', user.username);
+
                 res.redirect('/');
             } else {
-                // res.send('Incorrect Username and/or Password!');
                 loginMessage = 'Incorrect Username and/or Password!';
                 res.redirect('/login');
             }
@@ -68,14 +78,24 @@ app.post('/login', function (req, res) {
 })
 
 
-// app.use(express.static(path.join(__dirname, 'static')));
-
 // port
 server.listen(process.env.PORT || 1337, function () {
     console.log('server dang chay....');
 });
 
 // tài xỉu
+
+async function getUserById(id) {
+    return new Promise((resolve, reject) => {
+        connection.query('SELECT * FROM users WHERE id = ?', [id], function (error, results, fields) {
+            if (error) reject(error);
+            if (results.length > 0) {
+                let user = new User(results[0].id, results[0].username, results[0].display_name, results[0].balance);
+                resolve(user)
+            }
+        });
+    })
+}
 
 
 var Taixiu = function () {
@@ -151,6 +171,17 @@ var Taixiu = function () {
                 msg: 'Bạn đã thắng ' + data.tien + ' xu'
             });
         });
+        let winner = bets.filter((data) => {
+            return data.cau === this.ketQua.result;
+        })
+        console.log(winner);
+        winner.forEach((data) => {
+            connection.query('UPDATE users SET balance = balance + ? WHERE id = ?', [data.money * 2, data.user_id], function (error, results, fields) {
+                if (error) throw error;
+                console.log(results);
+            });
+        })
+        bets = []
         loopAGame = setInterval(function () {
             seft.time--;
             // console.log(seft.time);
@@ -170,7 +201,7 @@ var Taixiu = function () {
         }, 1000);
     };
     // đặt cược
-    this.putMoney = function (id, cau, tien) {
+    this.putMoney = function (id, cau, tien, user_id) {
         // nếu đang trong thời gian chờ (coTheDatCuoc == false)
         if (this.coTheDatCuoc == false) {
             return {
@@ -178,6 +209,17 @@ var Taixiu = function () {
                 error: 'Không thể đặt, vui lòng chờ giây lát'
             };
         }
+        let bet = bets.find(bet => {
+            return bet.user_id === user_id && bet.cau === cau
+        })
+        if (bet) {
+            bet.money = bet.money + tien
+            index = bets.findIndex((bet => bet.user_id === user_id && bet.cau === cau))
+            bets[index] = bet
+        } else {
+            bets.push(new Bet(user_id, cau, tien))
+        }
+        console.log(bets)
         if (cau == 'tai') {
             // thêm tiền vào tổng số tiền đặt tài
             this.tongTienDatTai += tien;
@@ -233,8 +275,8 @@ tx = new Taixiu();
 
 io.on('connection', function (socket) {
     socket.on('pull', function (data) {
-        msg = tx.putMoney(data.id, data.dice, data.money);
-        socket.emit('pull', msg);
+        msg = tx.putMoney(data.id, data.dice, data.money, data.user_id);
+        socket.emit('pull', {msg: msg, money: data.money});
     });
 });
 tx.gameStart();

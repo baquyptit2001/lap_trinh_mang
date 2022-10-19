@@ -1,7 +1,9 @@
 class User {
-    constructor(id= null, username = null) {
+    constructor(id= null, username = null, display_name = null, balance = null) {
         this.id = id;
         this.username = username;
+        this.display_name = display_name;
+        this.balance = balance;
     }
 }
 
