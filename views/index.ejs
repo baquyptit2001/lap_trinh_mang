@@ -310,6 +310,10 @@
         gameOver(data);
     });
 
+    socket.on('win_' + getCookie('user_id'), function (data) {
+        balance.innerHTML = (Number(balance.innerHTML) + Number(data.balance)).toString();
+    });
+
     socket.on('gameStart', function (data) {
         gameStart();
         showStt('Game bắt đầu');

@@ -102,7 +102,7 @@ var Taixiu = function () {
 
     // cài đặt
     this.idPhien = 0;  // id phiên đặt
-    this.timeDatCuoc = 60; // thời gian đặt cược = 60s;
+    this.timeDatCuoc = 10; // thời gian đặt cược = 60s;
     this.timechophienmoi = 10; // thời gian chờ phiên mới = 10s;
     this.soNguoiChonTai = 0;  // Số người đặt tài
     this.soNguoiChonXiu = 0;  // Số người đặt xỉu
@@ -168,15 +168,27 @@ var Taixiu = function () {
         idWin = this.ketQua.result == 'tai' ? seft.idChonTai : seft.idChonXiu;
         idWin.forEach((data) => {
             io.to(data.id).emit('winGame', {
-                msg: 'Bạn đã thắng ' + data.tien + ' xu'
+                msg: 'Bạn đã thắng ' + data.tien * 2 + ' xu'
             });
         });
         let winner = bets.filter((data) => {
             return data.cau === this.ketQua.result;
         })
+        let loser = bets.filter((data) => {
+            return data.cau !== this.ketQua.result;
+        })
         console.log(winner);
         winner.forEach((data) => {
-            connection.query('UPDATE users SET balance = balance + ? WHERE id = ?', [data.money * 2, data.user_id], function (error, results, fields) {
+            io.sockets.emit('win_' + data.user_id, {
+                balance: data.money * 2
+            })
+            connection.query('UPDATE users SET balance = balance + ? WHERE id = ?', [data.money, data.user_id], function (error, results, fields) {
+                if (error) throw error;
+                console.log(results);
+            });
+        })
+        loser.forEach((data) => {
+            connection.query('UPDATE users SET balance = balance - ? WHERE id = ?', [data.money, data.user_id], function (error, results, fields) {
                 if (error) throw error;
                 console.log(results);
             });
