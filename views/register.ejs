@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,minimum-scale=1">
-    <title>Login</title>
+    <title>Register</title>
     <!-- the form awesome library is used to add icons to our form -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
     <style>
@@ -49,7 +50,8 @@
             color: #ffffff;
         }
 
-        .login form input[type="password"], .login form input[type="text"] {
+        .login form input[type="password"],
+        .login form input[type="text"] {
             width: 310px;
             height: 50px;
             border: 1px solid #dee0e4;
@@ -75,25 +77,53 @@
         }
     </style>
 </head>
+
 <body>
-<div class="login">
-    <h1>Login</h1>
-    <h3 style="text-align: center; color: red"><%= loginMessage %></h3>
-    <form action="/login" method="post">
-        <label for="username">
-            <!-- font awesome icon -->
-            <i class="fas fa-user"></i>
-        </label>
-        <input type="text" name="username" placeholder="Username" id="username" required>
-        <label for="password">
-            <i class="fas fa-lock"></i>
-        </label>
-        <input type="password" name="password" placeholder="Password" id="password" required>
-        <input type="submit" value="Login">
-    </form>
-    <div style="text-align: center;padding: 15px 0;">
-        Chưa có tài khoản? <a href="/register">Đăng ký</a>
+    <div class="login">
+        <h1>Register</h1>
+        <h3 style="text-align: center; color: red">
+            <%= registerMessage %>
+        </h3>
+        <form action="/register" method="post" id="register_form">
+            <label for="username">
+                <!-- font awesome icon -->
+                <i class="fas fa-user"></i>
+            </label>
+            <input type="text" name="username" placeholder="Username" id="username" required>
+            <label for="display_name">
+                <!-- font awesome icon -->
+                <i class="fas fa-user"></i>
+            </label>
+            <input type="text" name="display_name" placeholder="Display Name" id="display_name" required>
+            <label for="password">
+                <i class="fas fa-lock"></i>
+            </label>
+            <input type="password" name="password" placeholder="Password" id="password" required>
+            <label for="password_confirmation">
+                <i class="fas fa-lock"></i>
+            </label>
+            <input type="password" name="password_confirmation" placeholder="Password Confirmation"
+                id="password_confirmation" required>
+            <input type="submit" value="Register">
+        </form>
+        <div style="text-align: center;padding: 15px 0;">
+            Đã có tài khoản? <a href="/login">Đăng nhập</a>
+        </div>
     </div>
-</div>
 </body>
+
+<script>
+    // this script is used to check if the password and password confirmation are the same
+    const password = document.getElementById('password');
+    const password_confirmation = document.getElementById('password_confirmation');
+    const register_form = document.getElementById('register_form');
+
+    register_form.addEventListener('submit', (e) => {
+        if (password.value !== password_confirmation.value) {
+            e.preventDefault();
+            alert('Passwords do not match');
+        }
+    });
+</script>
+
 </html>
