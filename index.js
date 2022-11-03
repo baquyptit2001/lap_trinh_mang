@@ -97,6 +97,21 @@ async function getUserById(id) {
     })
 }
 
+async function getBXH() {
+    return new Promise((resolve,reject) => {
+        connection.query('SELECT * FROM users ORDER BY balance DESC',function(err, results,field) {
+            if (err) reject(err);
+            if (results.length > 0) {
+                const listUser = [];
+                results.forEach(result => {
+                    listUser.push({ displayName: result.display_name, balance: result.balance })
+                })
+                resolve(listUser)
+            }
+        })
+    })
+}
+
 
 var Taixiu = function () {
 
@@ -113,10 +128,11 @@ var Taixiu = function () {
     this.idChonTai = []; // array id chọn tài
     this.idChonXiu = []; // array id chọn xỉu
     this.ketQua = ''; // kết quá
+    this.BXH = [];
 
 
     // game bắt đầu
-    this.gameStart = function () {
+    this.gameStart = async function () {
         // code
         seft = this;
         seft.idPhien++;
@@ -128,6 +144,11 @@ var Taixiu = function () {
         seft.idChonTai = []; // array id chọn tài
         seft.idChonXiu = []; // array id chọn xỉu
         seft.time = seft.timeDatCuoc;
+        seft.BXH = await getBXH();
+        this.BXH = seft.BXH;
+
+        io.sockets.emit('bxh', this.BXH);
+
         // console.log('newgame');
         io.sockets.emit('gameStart', this.ketQua);
         loopAGame = setInterval(function () {

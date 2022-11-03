@@ -161,6 +161,22 @@
             top: 220px;
         }
 
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td, th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #dddddd;
+        }
+
         @keyframes spin {
             0% {
                 transform: rotate(0deg);
@@ -192,6 +208,16 @@
         <span>Điểm: <span id="balance"><%= user.balance %></span></span>
     </div>
 </h1>
+
+<div style='position: absolute;
+    right: 0;
+    padding-right: 30px;
+    padding-top: 150px;'>
+    <h2> Bảng xếp hạng</h2>
+    <table id='bxh-value'>
+    </table>
+</div>
+
 <div class="main">
     <div id="dragon" class="dragon"></div>
     <div class="khung"></div>
@@ -234,6 +260,7 @@
     time = document.getElementById("time");
     user_id = getCookie('user_id');
     balance = document.getElementById("balance");
+    bxhValue = document.getElementById("bxh-value");
 
     gameStart = function () {
         time.style.opacity = 1;
@@ -289,6 +316,17 @@
         }, timeout);
     }
 
+    bxh = function(values) {
+      let html = "<tr><th>Tên</th> <th>Điểm</th></tr>";
+      for (let i = 0; i < values.values; i++) {
+        html +=
+        "<tr><td>" + values[i].username + "</td><td>" + values[i].balance + "</td> </tr>";
+
+      }
+      bxhValue.innerHTML = html;
+      // bxhValue.innerHTML = values;
+    }
+
     gameStart();
 
     var socket = io();
@@ -313,6 +351,18 @@
     socket.on('win_' + getCookie('user_id'), function (data) {
         balance.innerHTML = (Number(balance.innerHTML) + Number(data.balance)).toString();
     });
+
+    socket.on('bxh', function(data) {
+      let html = "<tr><th>Top</th><th>Tên</th> <th>Điểm</th></tr>";
+      for (let i = 0; i < data.length; i++) {
+        let STT = i+1;
+        html +=
+          "<tr><td>"+ STT +"</td><td>" + data[i].displayName + "</td><td>" + data[i].balance + "</td> </tr>";
+
+      }
+      bxhValue.innerHTML = html;
+      // bxhValue.innerHTML = data[0].username;
+    })
 
     socket.on('gameStart', function (data) {
         gameStart();
