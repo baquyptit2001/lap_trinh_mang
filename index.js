@@ -179,7 +179,7 @@ async function isDuplicateUser(username) {
 
 async function getBXH() {
     return new Promise((resolve,reject) => {
-        connection.query('SELECT * FROM users ORDER BY balance DESC',function(err, results,field) {
+        connection.query('SELECT * FROM users ORDER BY balance DESC LIMIT 5 ',function(err, results,field) {
             if (err) reject(err);
             if (results.length > 0) {
                 const listUser = [];
