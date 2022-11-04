@@ -18,13 +18,16 @@ app.use(cookieParser());
 var connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Baquy123!',
+    password: 'baquy123',
     database: 'taixiu'
 });
 
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({
+    extended: true
+}));
 app.use(express.json());
 var loginMessage = '';
+var registerMessage = '';
 const User = require('./model/User').User;
 const Bet = require('./model/Bet').Bet
 var user = null;
@@ -35,7 +38,9 @@ app.get('/', function (req, res) {
         res.redirect('/login');
     } else {
         user = getUserById(cookies.user_id).then(function (user) {
-            res.render(__dirname + '/views/index.ejs', {user: user});
+            res.render(__dirname + '/views/index.ejs', {
+                user: user
+            });
         });
     }
 })
@@ -45,10 +50,65 @@ app.get('/login', function (req, res) {
     if (cookies.user_id) {
         res.redirect('/');
     } else {
-        res.render(__dirname + '/views/login.ejs', {loginMessage: loginMessage});
+        res.render(__dirname + '/views/login.ejs', {
+            loginMessage: loginMessage
+        });
         loginMessage = '';
     }
 })
+
+app.get('/register', function (req, res) {
+    let cookies = req.cookies;
+    if (cookies.user_id) {
+        res.redirect('/');
+    } else {
+        res.render(__dirname + '/views/register.ejs', {
+            registerMessage: registerMessage
+        });
+        registerMessage = '';
+    }
+})
+
+app.post('/register', function (req, res) {
+    let cookies = req.cookies;
+    if (cookies.user_id) {
+        res.redirect('/');
+    } else {
+        let username = req.body.username;
+        let password = req.body.password;
+        let display_name = req.body.display_name;
+        let password_confirmation = req.body.password_confirmation;
+        if (password !== password_confirmation) {
+            registerMessage = 'Mật khẩu không khớp';
+            res.redirect('/register');
+        } else {
+            isDuplicateUser(username).then(function (isDuplicate) {
+                if (isDuplicate.length > 0) {
+                    console.log(isDuplicate);
+                    registerMessage = 'Tên đăng nhập đã tồn tại';
+                    res.redirect('/register');
+                    return;
+                } else {
+                    let user = {
+                        username: username,
+                        password: password,
+                        display_name: display_name,
+                        balance: 0
+                    };
+                    createUser(user).then(function (result) {
+                        if (result) {
+                            res.redirect('/login');
+                        } else {
+                            registerMessage = 'Tài khoản đã tồn tại';
+                            res.redirect('/register');
+                        }
+                    })
+                }
+            })
+        }
+    }
+})
+
 
 app.get('/logout', function (req, res) {
     res.clearCookie('user_id');
@@ -97,18 +157,38 @@ async function getUserById(id) {
     })
 }
 
+async function createUser(user) {
+    return new Promise((resolve, reject) => {
+        connection.query('INSERT INTO users (username, password, display_name, balance) VALUES (?, ?, ?, ?)', [user.username, user.password, user.display_name, user.balance], function (error, results, fields) {
+            if (error) reject(error);
+            resolve(results)
+        });
+    })
+}
+
+async function isDuplicateUser(username) {
+    return new Promise((resolve, reject) => {
+        connection.query('SELECT * FROM users WHERE username = ?', [username], function (error, results, fields) {
+            if (error) reject(error);
+            if (results.length > 0) {
+                resolve(results)
+            }
+        });
+    })
+}
+
 
 var Taixiu = function () {
 
     // cài đặt
-    this.idPhien = 0;  // id phiên đặt
+    this.idPhien = 0; // id phiên đặt
     this.timeDatCuoc = 10; // thời gian đặt cược = 60s;
     this.timechophienmoi = 10; // thời gian chờ phiên mới = 10s;
-    this.soNguoiChonTai = 0;  // Số người đặt tài
-    this.soNguoiChonXiu = 0;  // Số người đặt xỉu
-    this.tongTienDatTai = 0;  // tổng tiền đặt tài
-    this.tongTienDatXiu = 0;  // tổng tiền đặt xỉu
-    this.time = this.timeDatCuoc;  // thời gian
+    this.soNguoiChonTai = 0; // Số người đặt tài
+    this.soNguoiChonXiu = 0; // Số người đặt xỉu
+    this.tongTienDatTai = 0; // tổng tiền đặt tài
+    this.tongTienDatXiu = 0; // tổng tiền đặt xỉu
+    this.time = this.timeDatCuoc; // thời gian
     this.coTheDatCuoc = true; // có thể đặt hay không
     this.idChonTai = []; // array id chọn tài
     this.idChonXiu = []; // array id chọn xỉu
@@ -121,10 +201,10 @@ var Taixiu = function () {
         seft = this;
         seft.idPhien++;
         seft.coTheDatCuoc = true // có thể đặt
-        seft.soNguoiChonTai = 0;  // Số người đặt tài
-        seft.soNguoiChonXiu = 0;  // Số người đặt xỉu
-        seft.tongTienDatTai = 0;  // tổng tiền đặt tài
-        seft.tongTienDatXiu = 0;  // tổng tiền đặt xỉu
+        seft.soNguoiChonTai = 0; // Số người đặt tài
+        seft.soNguoiChonXiu = 0; // Số người đặt xỉu
+        seft.tongTienDatTai = 0; // tổng tiền đặt tài
+        seft.tongTienDatXiu = 0; // tổng tiền đặt xỉu
         seft.idChonTai = []; // array id chọn tài
         seft.idChonXiu = []; // array id chọn xỉu
         seft.time = seft.timeDatCuoc;
@@ -288,7 +368,10 @@ tx = new Taixiu();
 io.on('connection', function (socket) {
     socket.on('pull', function (data) {
         msg = tx.putMoney(data.id, data.dice, data.money, data.user_id);
-        socket.emit('pull', {msg: msg, money: data.money});
+        socket.emit('pull', {
+            msg: msg,
+            money: data.money
+        });
     });
 });
 tx.gameStart();
