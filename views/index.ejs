@@ -204,8 +204,9 @@
 <body>
 <h1 style="color: white; display: flex;justify-content: center">
     <div style="width: 60%;display: flex;justify-content: space-between">
-        <span>Hello, <%= user.display_name %> <a href="/logout" style="color: inherit; text-decoration: none">(Đăng xuất)</a></span>
+        <span>Hello, <span id="username"><%= user.display_name %></span></span>
         <span>Điểm: <span id="balance"><%= user.balance %></span></span>
+        <a href="/logout" style="color: inherit; text-decoration: none">Đăng xuất</a></span>
     </div>
 </h1>
 
@@ -217,6 +218,34 @@
     <table id='bxh-value'>
     </table>
 </div>
+
+<div style='position: absolute;
+    left: 0;
+    padding-left: 30px;
+    padding-top: 150px;'>
+    <h2> Chatbox</h2>
+</div>
+
+<div style='
+    position: absolute;
+    left: 0;
+    padding-left: 30px;
+    padding-top: 500px;
+    overflow:auto;
+    width: 200px;
+    height: 100px;
+    '>
+    <form action="/send" method="post">
+        <table id='chat-value'>
+        </table>
+        <label for="mess">
+            <i class="fas fa-user"></i>
+        </label>
+        <input type="text" name="mess" placeholder="Mess" id="mess" required>
+        <input type="submit" value="Send">
+    </form>
+</div>
+
 
 <div class="main">
     <div id="dragon" class="dragon"></div>
@@ -260,7 +289,9 @@
     time = document.getElementById("time");
     user_id = getCookie('user_id');
     balance = document.getElementById("balance");
+    // message = document.getElementById("message");
     bxhValue = document.getElementById("bxh-value");
+    chatValue = document.getElementById("chat-value");
 
     gameStart = function () {
         time.style.opacity = 1;
@@ -320,11 +351,20 @@
       let html = "<tr><th>Tên</th> <th>Điểm</th></tr>";
       for (let i = 0; i < values.values; i++) {
         html +=
-        "<tr><td>" + values[i].username + "</td><td>" + values[i].balance + "</td> </tr>";
+        "<tr><td>" + values[i].display_name + "</td><td>" + values[i].balance + "</td> </tr>";
 
       }
       bxhValue.innerHTML = html;
-      // bxhValue.innerHTML = values;
+    }
+
+    chat = function(values) {
+      let html = "<tr><th>Chatting</th></tr>";
+      for (let i = 0; i < values.values; i++) {
+        html +=
+        "<tr><td>" + values[i].toString() + "</td></tr>";
+
+      }
+      chatValue.innerHTML = html;
     }
 
     gameStart();
@@ -361,7 +401,17 @@
 
       }
       bxhValue.innerHTML = html;
-      // bxhValue.innerHTML = data[0].username;
+    })
+
+    socket.on('chat', function(data) {
+      let html = "<tr><th>Chatting</th></tr>";
+      for (let i = 0; i < data.length; i++) {
+        let STT = i+1;
+        html +=
+          "<tr><td>" + data[i].toString()+ "</td> </tr>";
+
+      }
+      chatValue.innerHTML = html;
     })
 
     socket.on('gameStart', function (data) {
