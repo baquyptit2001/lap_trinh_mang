@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8"/>
+    <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Game Tài Xỉu Online</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" media="screen" href=""/>
+    <link rel="stylesheet" type="text/css" media="screen" href="" />
     <script src=""></script>
     <style>
         body {
@@ -161,6 +161,22 @@
             top: 220px;
         }
 
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td, th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #dddddd;
+        }
+
         @keyframes spin {
             0% {
                 transform: rotate(0deg);
@@ -192,6 +208,36 @@
         <span>Điểm: <span id="balance"><%= user.balance %></span></span>
     </div>
 </h1>
+
+<div style='position: absolute;
+    right: 0;
+    padding-right: 30px;
+    padding-top: 150px;'>
+    <h2> Bảng xếp hạng</h2>
+    <table id='bxh-value'>
+        <tr>
+            <th>TOP</th>
+            <th>Tên</th>
+            <th>Điểm</th>
+        </tr>
+        <% for (let i = 0; i < bxh.length; i++) { %>
+            <% if(i === 0){ %>
+                <tr style='font-weight: bold;font-size: 20px'>
+            <% } else if(i === 1){ %>
+                <tr style='font-weight: bold;font-size: 18px'>
+            <% } else if(i === 2){ %>
+                <tr style='font-weight: bold;font-size: 16px'>
+            <% } else { %>
+                <tr>
+            <% } %>
+                <td> <%= i + 1 %> </td>
+                <td> <%= bxh[i].displayName %> </td>
+                <td> <%= bxh[i].balance %></td>
+            </tr>
+        <% } %>
+    </table>
+</div>
+
 <div class="main">
     <div id="dragon" class="dragon"></div>
     <div class="khung"></div>
@@ -209,7 +255,7 @@
     <input id="pullxiu" class="input" type="number">
     <input id="pulltai" class="input" type="number" style="left: 525px;">
     <img src="" id="roll"
-         style="position: absolute; left:300px; top: 190px; transition: 0.5s;opacity: 0; width: 180px"/>
+         style="position: absolute; left:300px; top: 190px; transition: 0.5s;opacity: 0; width: 180px" />
     <p id="userxiu" class="usertxt" style="position: absolute; left: 115px;top: 352px;"></p>
     <p id="usertai" class="usertxt" style="position: absolute; right: 180px;top: 352px;"></p>
     <div class="txt">
@@ -223,155 +269,182 @@
 
 <script>
 
-    d1 = document.getElementById("dice1");
-    d2 = document.getElementById("dice2");
-    d3 = document.getElementById("dice3");
-    idGame = document.getElementById("id");
-    soNguoiChonTai = document.getElementById("usertai");
-    soNguoiChonXiu = document.getElementById("userxiu");
-    tongTienDatTai = document.getElementById("sumtai");
-    tongTienDatXiu = document.getElementById("sumxiu");
-    time = document.getElementById("time");
-    user_id = getCookie('user_id');
-    balance = document.getElementById("balance");
+  d1 = document.getElementById('dice1');
+  d2 = document.getElementById('dice2');
+  d3 = document.getElementById('dice3');
+  idGame = document.getElementById('id');
+  soNguoiChonTai = document.getElementById('usertai');
+  soNguoiChonXiu = document.getElementById('userxiu');
+  tongTienDatTai = document.getElementById('sumtai');
+  tongTienDatXiu = document.getElementById('sumxiu');
+  time = document.getElementById('time');
+  user_id = getCookie('user_id');
+  balance = document.getElementById('balance');
+  bxhValue = document.getElementById('bxh-value');
 
-    gameStart = function () {
-        time.style.opacity = 1;
-        d1.style.opacity = 0;
-        d2.style.opacity = 0;
-        d3.style.opacity = 0;
-        document.getElementById('dragon').style.webkitAnimationPlayState = 'running';
-        document.getElementById("taitxt").style.webkitAnimationPlayState = 'paused';
-        document.getElementById("xiutxt").style.webkitAnimationPlayState = 'paused';
+  gameStart = function() {
+    time.style.opacity = 1;
+    d1.style.opacity = 0;
+    d2.style.opacity = 0;
+    d3.style.opacity = 0;
+    document.getElementById('dragon').style.webkitAnimationPlayState = 'running';
+    document.getElementById('taitxt').style.webkitAnimationPlayState = 'paused';
+    document.getElementById('xiutxt').style.webkitAnimationPlayState = 'paused';
+  };
+  gameOver = function(dice) {
+    time.style.opacity = 0;
+    roll = document.getElementById('roll');
+    document.getElementById('dragon').style.webkitAnimationPlayState = 'paused';
+    roll.src = '';
+    roll.src = 'imgs/roll1.gif';
+    roll.style.opacity = 1;
+    setTimeout(() => {
+      roll.style.opacity = 0;
+      showDice(dice.dice1, dice.dice2, dice.dice3);
+      document.getElementById(dice.result + 'txt').style.webkitAnimationPlayState = 'running';
+    }, 2000);
+  };
+
+  showDice = function(dice1, dice2, dice3) {
+    dice = {
+      1: '0 -2px',
+      2: '-103px -3px',
+      3: '-204px -3px',
+      4: '-305px -3px',
+      5: '-404px -3px',
+      6: '-507px -2px',
+    };
+    d1.style.background = 'url(\'imgs/dice.png\') no-repeat ' + dice[dice1];
+    d2.style.background = 'url(\'imgs/dice.png\') no-repeat ' + dice[dice2];
+    d3.style.background = 'url(\'imgs/dice.png\') no-repeat ' + dice[dice3];
+    d1.style.opacity = 1;
+    d2.style.opacity = 1;
+    d3.style.opacity = 1;
+
+  };
+
+  setBalance = function(balance) {
+    balance.innerHTML = balance;
+  };
+
+  showStt = function(msg, timeout = 3000) {
+    statustxt = document.getElementById('statustxt');
+    statustxt.innerHTML = msg;
+    statustxt.style.opacity = 1;
+    setTimeout(() => {
+      statustxt.style.opacity = 0;
+    }, timeout);
+  };
+
+  bxh = function(values) {
+    let html = '<tr><th>Tên</th> <th>Điểm</th></tr>';
+    for (let i = 0; i < values.values; i++) {
+      html +=
+        '<tr><td>' + values[i].username + '</td><td>' + values[i].balance + '</td> </tr>';
+
     }
-    gameOver = function (dice) {
-        time.style.opacity = 0;
-        roll = document.getElementById("roll");
-        document.getElementById('dragon').style.webkitAnimationPlayState = 'paused';
-        roll.src = "";
-        roll.src = 'imgs/roll1.gif';
-        roll.style.opacity = 1;
-        setTimeout(() => {
-            roll.style.opacity = 0;
-            showDice(dice.dice1, dice.dice2, dice.dice3);
-            document.getElementById(dice.result + "txt").style.webkitAnimationPlayState = 'running';
-        }, 2000);
+    bxhValue.innerHTML = html;
+    // bxhValue.innerHTML = values;
+  };
+
+  gameStart();
+
+  var socket = io();
+
+  socket.on('gameData', function(data) {
+    idGame.innerHTML = '#' + data.idGame;
+    soNguoiChonTai.innerHTML = data.soNguoiChonTai;
+    soNguoiChonXiu.innerHTML = data.soNguoiChonXiu;
+    tongTienDatTai.innerHTML = data.tongTienDatTai / 1000 + 'k';
+    tongTienDatXiu.innerHTML = data.tongTienDatXiu / 1000 + 'k';
+    if (data.time.toString().length == 1) {
+      time.innerHTML = data.time == 0 ? '' : '0' + data.time;
+    } else {
+      time.innerHTML = data.time;
     }
+  });
 
-    showDice = function (dice1, dice2, dice3) {
-        dice = {
-            1: '0 -2px',
-            2: '-103px -3px',
-            3: '-204px -3px',
-            4: '-305px -3px',
-            5: '-404px -3px',
-            6: '-507px -2px',
-        };
-        d1.style.background = "url('imgs/dice.png') no-repeat " + dice[dice1];
-        d2.style.background = "url('imgs/dice.png') no-repeat " + dice[dice2];
-        d3.style.background = "url('imgs/dice.png') no-repeat " + dice[dice3];
-        d1.style.opacity = 1;
-        d2.style.opacity = 1;
-        d3.style.opacity = 1;
+  socket.on('gameOver', function(data) {
+    gameOver(data);
+  });
+
+  socket.on('win_' + getCookie('user_id'), function(data) {
+    balance.innerHTML = (Number(balance.innerHTML) + Number(data.balance)).toString();
+  });
+
+  socket.on('bxh', function(data) {
+    let html = '<tr><th>Top</th><th>Tên</th> <th>Điểm</th></tr>';
+    for (let i = 0; i < data.length; i++) {
+      let STT = i + 1;
+      if(i===0) html += "<tr style='font-weight: bold;font-size: 20px'>";
+      else if(i===1) html +="<tr style='font-weight: bold;font-size: 18px'>";
+      else if(i===2) html += "<tr style='font-weight: bold;font-size: 16px'>";
+      else html+= "<tr>";
+      html +=
+        '<td>' + STT + '</td><td>' + data[i].displayName + '</td><td>' + data[i].balance + '</td> </tr>';
 
     }
+    bxhValue.innerHTML = html;
+  });
 
-    setBalance = function (balance) {
-        balance.innerHTML = balance;
-    }
-
-    showStt = function (msg, timeout = 3000) {
-        statustxt = document.getElementById('statustxt');
-        statustxt.innerHTML = msg;
-        statustxt.style.opacity = 1;
-        setTimeout(() => {
-            statustxt.style.opacity = 0;
-        }, timeout);
-    }
-
+  socket.on('gameStart', function(data) {
     gameStart();
+    showStt('Game bắt đầu');
+  });
 
-    var socket = io();
-
-    socket.on('gameData', function (data) {
-        idGame.innerHTML = '#' + data.idGame;
-        soNguoiChonTai.innerHTML = data.soNguoiChonTai;
-        soNguoiChonXiu.innerHTML = data.soNguoiChonXiu;
-        tongTienDatTai.innerHTML = data.tongTienDatTai / 1000 + 'k';
-        tongTienDatXiu.innerHTML = data.tongTienDatXiu / 1000 + 'k';
-        if (data.time.toString().length == 1) {
-            time.innerHTML = data.time == 0 ? '' : '0' + data.time;
-        } else {
-            time.innerHTML = data.time;
-        }
-    });
-
-    socket.on('gameOver', function (data) {
-        gameOver(data);
-    });
-
-    socket.on('win_' + getCookie('user_id'), function (data) {
-        balance.innerHTML = (Number(balance.innerHTML) + Number(data.balance)).toString();
-    });
-
-    socket.on('gameStart', function (data) {
-        gameStart();
-        showStt('Game bắt đầu');
-    });
-
-    socket.on('pull', function (data) {
-        if (data.msg.status === 'success') {
-            showStt('Đặt cược thành công');
-            balance.innerHTML = (Number(balance.innerHTML) - Number(data.money)).toString();
-        } else if (data.status === 'error') {
-            showStt(data.error);
-        }
-
-    });
-    socket.on('winGame', function (data) {
-        showStt(data.msg, 10000);
-    });
-
-    document.getElementById('pulltai').addEventListener("keyup", function (event) {
-        if (event.key === "Enter") {
-            let money = Number(document.getElementById('pulltai').value);
-            if (money > balance.innerHTML) {
-                alert('Số tiền không đủ');
-                return;
-            }
-            socket.emit('pull', {
-                id: socket.id,
-                dice: 'tai',
-                money: money,
-                user_id: user_id
-            })
-            document.getElementById('pulltai').value = '';
-        }
-    });
-
-
-    document.getElementById('pullxiu').addEventListener("keyup", function (event) {
-        if (event.key === "Enter") {
-            let money = Number(document.getElementById('pullxiu').value);
-            if (money > balance.innerHTML) {
-                alert('Số tiền không đủ');
-                return;
-            }
-            socket.emit('pull', {
-                id: socket.id,
-                dice: 'xiu',
-                money: money,
-                user_id: user_id
-            })
-            document.getElementById('pullxiu').value = '';
-        }
-    });
-
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
+  socket.on('pull', function(data) {
+    if (data.msg.status === 'success') {
+      showStt('Đặt cược thành công');
+      balance.innerHTML = (Number(balance.innerHTML) - Number(data.money)).toString();
+    } else if (data.status === 'error') {
+      showStt(data.error);
     }
+
+  });
+  socket.on('winGame', function(data) {
+    showStt(data.msg, 10000);
+  });
+
+  document.getElementById('pulltai').addEventListener('keyup', function(event) {
+    if (event.key === 'Enter') {
+      let money = Number(document.getElementById('pulltai').value);
+      if (money > balance.innerHTML) {
+        alert('Số tiền không đủ');
+        return;
+      }
+      socket.emit('pull', {
+        id: socket.id,
+        dice: 'tai',
+        money: money,
+        user_id: user_id,
+      });
+      document.getElementById('pulltai').value = '';
+    }
+  });
+
+
+  document.getElementById('pullxiu').addEventListener('keyup', function(event) {
+    if (event.key === 'Enter') {
+      let money = Number(document.getElementById('pullxiu').value);
+      if (money > balance.innerHTML) {
+        alert('Số tiền không đủ');
+        return;
+      }
+      socket.emit('pull', {
+        id: socket.id,
+        dice: 'xiu',
+        money: money,
+        user_id: user_id,
+      });
+      document.getElementById('pullxiu').value = '';
+    }
+  });
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
 
 </script>
 </html>

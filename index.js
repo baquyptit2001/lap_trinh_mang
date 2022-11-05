@@ -32,14 +32,16 @@ const User = require('./model/User').User;
 const Bet = require('./model/Bet').Bet
 var user = null;
 var bets = []
-app.get('/', function (req, res) {
+app.get('/', async function (req, res) {
     let cookies = req.cookies;
     if (!cookies.user_id) {
         res.redirect('/login');
     } else {
+        let BXH = await getBXH();
         user = getUserById(cookies.user_id).then(function (user) {
             res.render(__dirname + '/views/index.ejs', {
-                user: user
+                user: user,
+                bxh: BXH,
             });
         });
     }
@@ -177,6 +179,21 @@ async function isDuplicateUser(username) {
     })
 }
 
+async function getBXH() {
+    return new Promise((resolve,reject) => {
+        connection.query('SELECT * FROM users ORDER BY balance DESC LIMIT 5 ',function(err, results,field) {
+            if (err) reject(err);
+            if (results.length > 0) {
+                const listUser = [];
+                results.forEach(result => {
+                    listUser.push({ displayName: result.display_name, balance: result.balance })
+                })
+                resolve(listUser)
+            }
+        })
+    })
+}
+
 
 var Taixiu = function () {
 
@@ -193,10 +210,11 @@ var Taixiu = function () {
     this.idChonTai = []; // array id chọn tài
     this.idChonXiu = []; // array id chọn xỉu
     this.ketQua = ''; // kết quá
+    this.BXH = [];
 
 
     // game bắt đầu
-    this.gameStart = function () {
+    this.gameStart = async function () {
         // code
         seft = this;
         seft.idPhien++;
@@ -208,6 +226,11 @@ var Taixiu = function () {
         seft.idChonTai = []; // array id chọn tài
         seft.idChonXiu = []; // array id chọn xỉu
         seft.time = seft.timeDatCuoc;
+        seft.BXH = await getBXH();
+        this.BXH = seft.BXH;
+
+        io.sockets.emit('bxh', this.BXH);
+
         // console.log('newgame');
         io.sockets.emit('gameStart', this.ketQua);
         loopAGame = setInterval(function () {
