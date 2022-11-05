@@ -33,14 +33,16 @@ const User = require('./model/User').User;
 const Bet = require('./model/Bet').Bet
 var user = null;
 var bets = []
-app.get('/', function (req, res) {
+app.get('/', async function (req, res) {
     let cookies = req.cookies;
     if (!cookies.user_id) {
         res.redirect('/login');
     } else {
+        let BXH = await getBXH();
         user = getUserById(cookies.user_id).then(function (user) {
             res.render(__dirname + '/views/index.ejs', {
-                user: user
+                user: user,
+                bxh: BXH,
             });
         });
     }
@@ -302,7 +304,7 @@ var Taixiu = function () {
         idWin = this.ketQua.result == 'tai' ? seft.idChonTai : seft.idChonXiu;
         idWin.forEach((data) => {
             io.to(data.id).emit('winGame', {
-                msg: 'Bạn đã thắng ' + data.tien * 2 + ' xu'
+                msg: 'Bạn đã thắng ' + data.tien * 2 + ' điểm'
             });
         });
         let winner = bets.filter((data) => {
