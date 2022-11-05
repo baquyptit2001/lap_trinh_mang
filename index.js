@@ -115,6 +115,7 @@ app.post('/register', function (req, res) {
 app.get('/logout', function (req, res) {
     res.clearCookie('user_id');
     res.clearCookie('user_username');
+    res.clearCookie('user_display_name');
     res.redirect('/login');
 })
 
@@ -125,9 +126,10 @@ app.post('/login', function (req, res) {
         connection.query('SELECT * FROM users WHERE username = ? AND password = ? limit 1', [username, password], function (error, results, fields) {
             if (error) throw error;
             if (results.length > 0) {
-                user = new User(results[0].id, results[0].username);
+                user = new User(results[0].id, results[0].username, results[0].display_name);
                 res.cookie('user_id', user.id);
                 res.cookie('user_username', user.username);
+                res.cookie('user_display_name', user.display_name);
 
                 res.redirect('/');
             } else {
@@ -180,13 +182,13 @@ async function isDuplicateUser(username) {
 }
 
 async function getBXH() {
-    return new Promise((resolve,reject) => {
-        connection.query('SELECT * FROM users ORDER BY balance DESC LIMIT 5 ',function(err, results,field) {
+    return new Promise((resolve, reject) => {
+        connection.query('SELECT * FROM users ORDER BY balance DESC LIMIT 5 ', function (err, results, field) {
             if (err) reject(err);
             if (results.length > 0) {
                 const listUser = [];
                 results.forEach(result => {
-                    listUser.push({ displayName: result.display_name, balance: result.balance })
+                    listUser.push({displayName: result.display_name, balance: result.balance})
                 })
                 resolve(listUser)
             }
@@ -396,5 +398,11 @@ io.on('connection', function (socket) {
             money: data.money
         });
     });
+    socket.on('post_chat', function (data) {
+        socket.broadcast.emit('post_chat', {
+            message: data.message,
+            display_name: data.display_name,
+        })
+    })
 });
 tx.gameStart();
