@@ -1,6 +1,7 @@
 var io = require('socket.io')(server);
 var express = require('express');
 var app = express();
+const list = [];
 app.use(express.static('public'))
 
 // app.use(express.static('./www'));
@@ -18,7 +19,7 @@ app.use(cookieParser());
 var connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'baquy123',
+    password: '12345678',
     database: 'taixiu'
 });
 
@@ -139,6 +140,14 @@ app.post('/login', function (req, res) {
     }
 })
 
+app.post('/send', function (req,res) {
+    var mess = req.body.mess;
+    if (mess) {
+        list.push(mess);
+        
+    }
+})
+
 
 // port
 server.listen(process.env.PORT || 1337, function () {
@@ -194,6 +203,26 @@ async function getBXH() {
     })
 }
 
+async function getCA() {
+    return new Promise((resolve) => {
+                resolve(list)
+    })
+}
+// async function getCA() {
+//     return new Promise((resolve,reject) => {
+//         connection.query('SELECT * FROM users ORDER BY balance DESC LIMIT 5 ',function(err, results,field) {
+//             if (err) reject(err);
+//             if (results.length > 0) {
+//                 const list = [];
+//                 results.forEach(result => {
+//                     list.push({balance: result.balance })
+//                 })
+//                 resolve(list)
+//             }
+//         })
+//     })
+// }
+
 
 var Taixiu = function () {
 
@@ -211,6 +240,7 @@ var Taixiu = function () {
     this.idChonXiu = []; // array id chọn xỉu
     this.ketQua = ''; // kết quá
     this.BXH = [];
+    this.CA = [];
 
 
     // game bắt đầu
@@ -228,8 +258,11 @@ var Taixiu = function () {
         seft.time = seft.timeDatCuoc;
         seft.BXH = await getBXH();
         this.BXH = seft.BXH;
+        // seft.CA = await getCA();
+        // this.CA = seft.CA;
 
         io.sockets.emit('bxh', this.BXH);
+        // io.sockets.emit('chat', this.CA);
 
         // console.log('newgame');
         io.sockets.emit('gameStart', this.ketQua);
@@ -396,5 +429,13 @@ io.on('connection', function (socket) {
             money: data.money
         });
     });
+
+    socket.on('chat', function(data) {
+        console.log(data);
+        io.emit('chat', {
+            mess: data.mess,
+            userId: data.user_id,
+        });
+    })
 });
 tx.gameStart();

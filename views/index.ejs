@@ -204,8 +204,9 @@
 <body>
 <h1 style="color: white; display: flex;justify-content: center">
     <div style="width: 60%;display: flex;justify-content: space-between">
-        <span>Hello, <%= user.display_name %> <a href="/logout" style="color: inherit; text-decoration: none">(Đăng xuất)</a></span>
+        <span>Hello, <span id="username"><%= user.display_name %></span></span>
         <span>Điểm: <span id="balance"><%= user.balance %></span></span>
+        <a href="/logout" style="color: inherit; text-decoration: none">Đăng xuất</a></span>
     </div>
 </h1>
 
@@ -237,6 +238,30 @@
         <% } %>
     </table>
 </div>
+
+<div style='position: absolute;
+    left: 0;
+    padding-left: 30px;
+    padding-top: 150px;'>
+    <h2> Chatbox</h2>
+</div>
+
+<div style='
+    background-color:#dddddd;
+    position: absolute;
+    left: 15px;
+    padding-left: 30px;
+    top: 300px;
+    overflow:auto;
+    width: 200px;
+    height: 200px;
+    '>
+    <table id='chat-value'>
+    </table>
+    <input type="text" name="mess" placeholder="Message" id="mess">
+    <button type="button" id='send-mess' value="Send">Send</button>
+</div>
+
 
 <div class="main">
     <div id="dragon" class="dragon"></div>
@@ -336,16 +361,19 @@
     }, timeout);
   };
 
-  bxh = function(values) {
-    let html = '<tr><th>Tên</th> <th>Điểm</th></tr>';
-    for (let i = 0; i < values.values; i++) {
-      html +=
-        '<tr><td>' + values[i].username + '</td><td>' + values[i].balance + '</td> </tr>';
+    bxh = function(values) {
+      let html = "<tr><th>Tên</th> <th>Điểm</th></tr>";
+      for (let i = 0; i < values.values; i++) {
+        html +=
+        "<tr><td>" + values[i].display_name + "</td><td>" + values[i].balance + "</td> </tr>";
 
+      }
+      bxhValue.innerHTML = html;
     }
-    bxhValue.innerHTML = html;
-    // bxhValue.innerHTML = values;
-  };
+
+    chat = function(values) {
+      chatValue.innerHTML += "<tr><td>" + values.toString() + "</td></tr>";
+    }
 
   gameStart();
 
@@ -383,9 +411,13 @@
       html +=
         '<td>' + STT + '</td><td>' + data[i].displayName + '</td><td>' + data[i].balance + '</td> </tr>';
 
-    }
-    bxhValue.innerHTML = html;
-  });
+      }
+      bxhValue.innerHTML = html;
+    })
+
+    socket.on('chat', function(data) {
+      chatValue.innerHTML += "<tr><td>" + data.mess.toString() + "</td></tr>";
+    })
 
   socket.on('gameStart', function(data) {
     gameStart();
@@ -405,22 +437,52 @@
     showStt(data.msg, 10000);
   });
 
-  document.getElementById('pulltai').addEventListener('keyup', function(event) {
-    if (event.key === 'Enter') {
-      let money = Number(document.getElementById('pulltai').value);
-      if (money > balance.innerHTML) {
-        alert('Số tiền không đủ');
-        return;
+        document.getElementById('mess').addEventListener("keyup", function(event) {
+      if(event.key === 'Enter') {
+        let message = String(document.getElementById('mess').value);
+        if (message === '')
+        {
+            return;
+        }
+        socket.emit('chat', {
+          id: socket.id,
+          mess: document.getElementById('mess').value,
+          user_id: user_id
+        })
+        document.getElementById('mess').value = '';
       }
-      socket.emit('pull', {
-        id: socket.id,
-        dice: 'tai',
-        money: money,
-        user_id: user_id,
-      });
-      document.getElementById('pulltai').value = '';
+    })
+
+    document.getElementById('send-mess').addEventListener("click", function() {
+    let message = String(document.getElementById('mess').value);
+    if (message === '')
+    {
+        return;
     }
-  });
+      socket.emit('chat', {
+        id: socket.id,
+        mess: document.getElementById('mess').value,
+        user_id: user_id
+      })
+      document.getElementById('mess').value = '';
+    })
+
+    document.getElementById('pulltai').addEventListener("keyup", function (event) {
+        if (event.key === "Enter") {
+            let money = Number(document.getElementById('pulltai').value);
+            if (money > balance.innerHTML) {
+                alert('Số tiền không đủ');
+                return;
+            }
+            socket.emit('pull', {
+                id: socket.id,
+                dice: 'tai',
+                money: money,
+                user_id: user_id
+            })
+            document.getElementById('pulltai').value = '';
+        }
+    });
 
 
   document.getElementById('pullxiu').addEventListener('keyup', function(event) {
