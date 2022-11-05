@@ -19,7 +19,7 @@ app.use(cookieParser());
 var connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '123456',
+    password: '12345678',
     database: 'taixiu'
 });
 
@@ -256,11 +256,11 @@ var Taixiu = function () {
         seft.time = seft.timeDatCuoc;
         seft.BXH = await getBXH();
         this.BXH = seft.BXH;
-        seft.CA = await getCA();
-        this.CA = seft.CA;
+        // seft.CA = await getCA();
+        // this.CA = seft.CA;
 
         io.sockets.emit('bxh', this.BXH);
-        io.sockets.emit('chat', this.CA);
+        // io.sockets.emit('chat', this.CA);
 
         // console.log('newgame');
         io.sockets.emit('gameStart', this.ketQua);
@@ -427,5 +427,13 @@ io.on('connection', function (socket) {
             money: data.money
         });
     });
+
+    socket.on('chat', function(data) {
+        console.log(data);
+        io.emit('chat', {
+            mess: data.mess,
+            userId: data.user_id,
+        });
+    })
 });
 tx.gameStart();

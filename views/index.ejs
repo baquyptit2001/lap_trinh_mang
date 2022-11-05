@@ -235,15 +235,10 @@
     width: 200px;
     height: 100px;
     '>
-    <form action="/send" method="post">
-        <table id='chat-value'>
-        </table>
-        <label for="mess">
-            <i class="fas fa-user"></i>
-        </label>
-        <input type="text" name="mess" placeholder="Mess" id="mess" required>
-        <input type="submit" value="Send">
-    </form>
+    <table id='chat-value'>
+    </table>
+    <input type="text" name="mess" placeholder="Mess" id="mess">
+    <button type="button" id='send-mess' value="Send">Send</button>
 </div>
 
 
@@ -358,13 +353,7 @@
     }
 
     chat = function(values) {
-      let html = "<tr><th>Chatting</th></tr>";
-      for (let i = 0; i < values.values; i++) {
-        html +=
-        "<tr><td>" + values[i].toString() + "</td></tr>";
-
-      }
-      chatValue.innerHTML = html;
+      chatValue.innerHTML += "<tr><td>" + values.toString() + "</td></tr>";
     }
 
     gameStart();
@@ -404,14 +393,7 @@
     })
 
     socket.on('chat', function(data) {
-      let html = "<tr><th>Chatting</th></tr>";
-      for (let i = 0; i < data.length; i++) {
-        let STT = i+1;
-        html +=
-          "<tr><td>" + data[i].toString()+ "</td> </tr>";
-
-      }
-      chatValue.innerHTML = html;
+      chatValue.innerHTML += "<tr><td>" + data.mess.toString() + "</td></tr>";
     })
 
     socket.on('gameStart', function (data) {
@@ -431,6 +413,26 @@
     socket.on('winGame', function (data) {
         showStt(data.msg, 10000);
     });
+
+    document.getElementById('mess').addEventListener("keyup", function(event) {
+      if(event.key === 'Enter') {
+        socket.emit('chat', {
+          id: socket.id,
+          mess: document.getElementById('mess').value,
+          user_id: user_id
+        })
+        document.getElementById('mess').value = '';
+      }
+    })
+
+    document.getElementById('send-mess').addEventListener("click", function() {
+      socket.emit('chat', {
+        id: socket.id,
+        mess: document.getElementById('mess').value,
+        user_id: user_id
+      })
+      document.getElementById('mess').value = '';
+    })
 
     document.getElementById('pulltai').addEventListener("keyup", function (event) {
         if (event.key === "Enter") {
