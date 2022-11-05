@@ -415,8 +415,13 @@
         showStt(data.msg, 10000);
     });
 
-    document.getElementById('mess').addEventListener("keyup", function(event) {
+        document.getElementById('mess').addEventListener("keyup", function(event) {
       if(event.key === 'Enter') {
+        let message = String(document.getElementById('mess').value);
+        if (message === '') 
+        {
+            return;
+        }
         socket.emit('chat', {
           id: socket.id,
           mess: document.getElementById('mess').value,
@@ -427,6 +432,11 @@
     })
 
     document.getElementById('send-mess').addEventListener("click", function() {
+    let message = String(document.getElementById('mess').value);
+    if (message === '') 
+    {
+        return;
+    }
       socket.emit('chat', {
         id: socket.id,
         mess: document.getElementById('mess').value,
